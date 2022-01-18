@@ -1,17 +1,17 @@
 class Ball {
   PVector position;
-  PVector velocity;
+  PVector velocity = new PVector(0,0);
   
-  color clr;
+  PImage img;
   float radius;
-  float dragCoeff = 0.01;
+  float dragCoeff = 0.02;
 
-  Ball(float x, float y, float r_, color c) {
+  Ball(float x, float y, float r_, PImage img) {
     this.position = new PVector(x, y);
     this.radius = r_;
-    this.clr = c;
-    if(this.clr == color(255,255,255)) this.velocity = PVector.random2D().mult(20);
-    else this.velocity = new PVector(0,0);
+    this.img = img;
+    //if(this.clr == color(255,255,255)) this.velocity = PVector.random2D().mult(20);
+    //else this.velocity = new PVector(0,0);
   }
 
   void update() {
@@ -56,8 +56,6 @@ class Ball {
   }
   
   void display() {
-    noStroke();
-    fill(clr);
-    ellipse(position.x, position.y, radius*2, radius*2);
-  }
+    image(this.img, this.position.x, this.position.y, this.radius*2, this.radius*2);
+  } 
 }
