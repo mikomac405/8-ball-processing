@@ -1,5 +1,5 @@
 Ball[] balls =  { 
-  new Ball(0, 180, 20, color(255,255,255)),
+  new Ball(  0, 180, 20, color(255,255,255)),
   new Ball(500, 100, 20, color(255,0,150)), 
   new Ball(500, 140, 20, color(0,20,100)),
   new Ball(500, 180, 20, color(255,50,50)),
@@ -23,17 +23,11 @@ void setup() {
 
 void draw() {
   background(51);
-
-  for (Ball b : balls) {
-    b.update();
-    b.display();
-    b.checkBoundaryCollision();
-    for(Ball b_collide: balls){
-      if(b != b_collide){
-        b.checkCollision(b_collide);
-      }
-    }
+  for (int j = 0; j < balls.length; j++) {
+    balls[j].update();
+    balls[j].display();
+    balls[j].checkBoundaryCollision();
+    for (int k = j + 1; k < balls.length; k++)
+      balls[j].handleCollision(balls[k]);
   }
-  
- // balls[0].checkCollision(balls[1]);
 }
