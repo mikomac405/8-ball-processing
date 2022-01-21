@@ -1,5 +1,5 @@
 Ball[] balls =  { 
-  new Ball(  0, 180, 20, color(255,255,255)),
+  new Ball(300, 180, 20, color(255,254,255)),
   new Ball(500, 100, 20, color(255,0,150)), 
   new Ball(500, 140, 20, color(0,20,100)),
   new Ball(500, 180, 20, color(255,50,50)),
@@ -17,6 +17,8 @@ Ball[] balls =  {
   new Ball(360, 180, 20, color(0,0,255)),
 };
 
+Cue c = new Cue(balls[0]);
+
 void setup() {
   size(640, 360);
 }
@@ -30,4 +32,18 @@ void draw() {
     for (int k = j + 1; k < balls.length; k++)
       balls[j].handleCollision(balls[k]);
   }
+
+  c.display();
+}
+
+void mouseMoved() {
+  if(mouseX < pmouseX){
+    c.tipPosition.x = c.tipPosition.x + 1;
+    c.tipPosition.y = c.tipPosition.y + 1;
+  }
+  if(mouseX > pmouseX){
+    c.tipPosition.x = c.tipPosition.x - 1;
+    c.tipPosition.y = c.tipPosition.y - 1;
+  }
+  
 }
