@@ -9,7 +9,6 @@ class Cue{
 
 
   void display(){
-      noStroke();
-      rect(tipPosition.x, tipPosition.y, -300, 10);
+      line(0,0,mouseX,mouseY);
   }
 }

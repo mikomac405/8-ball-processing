@@ -32,8 +32,9 @@ void draw() {
     for (int k = j + 1; k < balls.length; k++)
       balls[j].handleCollision(balls[k]);
   }
-
-  c.display();
+  stroke(0);
+  line(balls[0].position.x,balls[0].position.y,mouseX,mouseY);
+  //c.display();
 }
 
 void mouseMoved() {
