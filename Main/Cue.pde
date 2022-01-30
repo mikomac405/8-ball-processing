@@ -10,7 +10,7 @@ class Cue{
   
   void draw(){
     this.animate(0.1);
-    stroke(0,0,255,160);
+    stroke(20,30,20,160);
     strokeWeight(10);
     line(tipPosition.x, tipPosition.y, endPosition.x, endPosition.y);
   }

@@ -6,6 +6,8 @@ class Ball {
   float radius;
   float dragCoeff = 0.02;
   int number;
+  
+  boolean inGame = true;
 
   Ball(float x, float y, float r_, PImage img, int number) {
     this.position = new PVector(x, y);
@@ -15,7 +17,9 @@ class Ball {
   }
  
   void update() {
-    this.position.add(this.velocity.mult(1-this.dragCoeff));
+    this.position.add(
+      PVector.mult((this.velocity.mult(1 - this.dragCoeff / SIM_STEPS_PER_FRAME)), 1.0 / SIM_STEPS_PER_FRAME)
+    );
   }
 
   void checkBoundaryCollision() {

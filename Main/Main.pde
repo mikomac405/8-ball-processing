@@ -7,6 +7,11 @@ boolean tookShot;
 boolean ballInHand;
 boolean endGame;
 
+boolean scored;
+
+final int SIM_STEPS_PER_FRAME = 30;
+
+
 Player player1;
 Player player2;
 Player currentPlayer;
@@ -25,6 +30,7 @@ void setup() {
   tookShot = false;
   ballInHand = false;
   endGame = false;
+  scored = false;
   
   cue = new Cue();
   player1 = new Player("G1");
@@ -73,127 +79,130 @@ void draw() {
 
   text(currentPlayer.toString(), 40, 240);
   text("Ball in hand: " + str(ballInHand), 40, 260);
-  
-  for (int j = 0; j < balls.size(); j++) {
-    balls.get(j).update();
-    balls.get(j).display();
-    balls.get(j).checkBoundaryCollision();
-    for (int k = j + 1; k < balls.size(); k++)
-      balls.get(j).handleCollision(balls.get(k));
-    for (int l = 0; l < pits.size(); l++){
-      if(balls.get(j).handlePitCollision(pits.get(l))){
+  for(int i = 0; i < SIM_STEPS_PER_FRAME; i++){
+    for (int j = 0; j < balls.size(); j++) {
+      if(balls.get(j).inGame){
+        balls.get(j).update();
+        //balls.get(j).display();
+        balls.get(j).checkBoundaryCollision();
+        for (int k = j + 1; k < balls.size(); k++)
+          if(balls.get(k).inGame) balls.get(j).handleCollision(balls.get(k));
+        for (int l = 0; l < pits.size(); l++){
+          if(balls.get(j).handlePitCollision(pits.get(l))){
           
-          // Reset cue ball
+            // Reset cue ball
         
-          if(balls.get(j).number == 0){
-            resetCueBall = true;
-          } 
+            if(balls.get(j).number == 0){
+              resetCueBall = true;
+            } 
         
-         if(currentPlayer.group == 0){
-           if(balls.get(j).number < 8 && balls.get(j).number > 0){
-             currentPlayer.group = 1;
-             if(currentPlayer == player1){
-               player2.group = 2;
-             }
-             else{
-               player1.group = 2;
-             }
-           }
-           else if(balls.get(j).number > 8 && balls.get(j).number <= 15){
-             currentPlayer.group = 2;
-             if(currentPlayer == player1){
-               player2.group = 1;
-             }
-             else{
-               player1.group = 1;
-             }
-           }
-         }
+            if(currentPlayer.group == 0){
+              if(balls.get(j).number < 8 && balls.get(j).number > 0){
+                currentPlayer.group = 1;
+                if(currentPlayer == player1) player2.group = 2;
+                else player1.group = 2;
+              }
+              else if(balls.get(j).number > 8 && balls.get(j).number <= 15){
+                currentPlayer.group = 2;
+                if(currentPlayer == player1) player2.group = 1;
+                else player1.group = 1;
+              }
+            }
          
-         // Correct pocket
+            // Correct pocket
          
-         if(currentPlayer.group == 1 && balls.get(j).number < 8 && balls.get(j).number > 0){
-           currentPlayer.ballsInPits += 1;
-         }
-         else if(currentPlayer.group == 2 && balls.get(j).number > 8 && balls.get(j).number <= 15){
-           currentPlayer.ballsInPits += 1;
-         }
-         else if(balls.get(j).number == 8 && currentPlayer.ballsInPits == 7){
-            text(currentPlayer.name + " won!", 0, 240);
-            endGame = true;
-         }
+            if(currentPlayer.group == 1 && balls.get(j).number < 8 && balls.get(j).number > 0){
+              currentPlayer.ballsInPits += 1;
+              scored = true;
+            }
+            else if(currentPlayer.group == 2 && balls.get(j).number > 8 && balls.get(j).number <= 15){
+              currentPlayer.ballsInPits += 1;
+              scored = true;
+            }
+            else if(balls.get(j).number == 8 && currentPlayer.ballsInPits == 7){
+              text(currentPlayer.name + " won!", 0, 240);
+              endGame = true;
+            }
          
-         // Incorrect pocket
-         if(currentPlayer.group == 1 && balls.get(j).number > 8 && balls.get(j).number <= 15){
-           if(currentPlayer == player1){
-             player2.ballsInPits += 1;
-           } else {
-             player1.ballsInPits += 1;
-           }
-           resetCueBall = true;
-         }
-         else if(currentPlayer.group == 2 && balls.get(j).number < 8 && balls.get(j).number > 0){
-           if(currentPlayer == player1){
-             player2.ballsInPits += 1;
-           } else {
-             player1.ballsInPits += 1;
-           }
-           resetCueBall = true;
-         }
+            // Incorrect pocket
+            if(currentPlayer.group == 1 && balls.get(j).number > 8 && balls.get(j).number <= 15){
+              if(currentPlayer == player1){
+                player2.ballsInPits += 1;
+              } else {
+                player1.ballsInPits += 1;
+              }
+              resetCueBall = true;
+            }
+            else if(currentPlayer.group == 2 && balls.get(j).number < 8 && balls.get(j).number > 0){
+              if(currentPlayer == player1){
+                player2.ballsInPits += 1;
+              } else {
+                player1.ballsInPits += 1;
+              }
+              resetCueBall = true;
+            }
          
-         // Fail
-         if(balls.get(j).number == 8 && currentPlayer.ballsInPits != 7){
-           if(currentPlayer == player1){
-             text(player2.name + " won!", 10, 10);
-           }
-           else{
-             text(player1.name + " won!", 10, 10);
-           }
-           endGame = true;
-         }
-         
-         balls.remove(j);
-         break;
+            // Fail
+            if(balls.get(j).number == 8 && currentPlayer.ballsInPits != 7){
+              if(currentPlayer == player1){
+                text(player2.name + " won!", 10, 10);
+              }
+              else{
+                text(player1.name + " won!", 10, 10);
+              }
+              endGame = true;
+            }
+            balls.get(j).inGame = false;
+          }
         }
       }
     }
-  
+  }
   
   for(int i = 0; i < pits.size(); i++){
     pits.get(i).draw();
   }
   
+  for(int i = 0; i < balls.size(); i++){
+    if(balls.get(i).inGame) balls.get(i).display();
+  }
+  
   if(checkStale(STALE_BIAS)){
     if(!cue.animationPlaying){
       if(tookShot){
-        if(currentPlayer == player1){
-          currentPlayer = player2;
-        } else {
-          currentPlayer = player1;
+        if(!scored){
+          if(currentPlayer == player1 ){
+            currentPlayer = player2;
+          } else {
+            currentPlayer = player1;
+          }
         }
         tookShot = false;
+        scored = false;
         ballInHand = false;
       }
       if(resetCueBall){
-        balls.add(new Ball(500, 490, 20, ballsImgs.get(0), 0));
+        balls.get(0).position = new PVector(500, 490);
+        balls.get(0).inGame = true;
+        balls.get(0).velocity = new PVector(0,0);
         resetCueBall = false;
         ballInHand = true;
       }
       cue.maxOffset = map(  // Zmiana odległości kija od kuli w zależności od dystansu kursora od kuli
-        PVector.sub(getCueBall().position,new PVector(mouseX,mouseY)).mag(),
+        PVector.sub(balls.get(0).position,new PVector(mouseX, mouseY)).mag(),
         0,width,
-        MIN_CUE_OFFSET + getCueBall().radius,
-        MAX_CUE_OFFSET + getCueBall().radius
+        MIN_CUE_OFFSET + balls.get(0).radius,
+        MAX_CUE_OFFSET + balls.get(0).radius
       );
     }
-    PVector temp = PVector.sub(getCueBall().position,new PVector(mouseX,mouseY)).normalize();
-    cue.tipPosition = PVector.mult(temp, cue.offset).add(getCueBall().position);
-    cue.endPosition = temp.mult(cue.offset + cue.length).add(getCueBall().position);
+    PVector temp = PVector.sub(balls.get(0).position,new PVector(mouseX, mouseY)).normalize();
+    cue.tipPosition = PVector.mult(temp, cue.offset).add(balls.get(0).position);
+    cue.endPosition = temp.mult(cue.offset + cue.length).add(balls.get(0).position);
     
     cue.draw(); // tutaj odbywa się też próba odegrania animacji
     
     if(cue.trigger) // strzał w ostatniej klatce animacji
-      getCueBall().velocity = new PVector(mouseX,mouseY).sub(getCueBall().position).mult(0.08);
+      balls.get(0).velocity = new PVector(mouseX, mouseY).sub(balls.get(0).position).mult(0.08);
   }
 }
 
@@ -206,7 +215,7 @@ void loadGraphics(){
 boolean checkStale(float bias){
   float maxVel = 0;
   for(Ball ball : balls)
-    if(ball.velocity.mag() > maxVel) 
+    if(ball.velocity.mag() > maxVel && ball.inGame) 
       maxVel = ball.velocity.mag();
   return (maxVel < bias);
 }
@@ -217,27 +226,21 @@ void mouseClicked(){
 }
 
 void keyPressed(){
-  if(key == 'k'){
-    if(ballInHand){
-      getCueBall().position = new PVector(mouseX,mouseY);
-    }
-  }
+  if(key == 'k')
+    if(ballInHand) balls.get(0).position = new PVector(mouseX, mouseY);
 }
 
 void keyReleased(){
-  if(key == 'k'){
-    if(ballInHand){
-      ballInHand = false;
-    }
-  }
+  if(key == 'k')
+    if(ballInHand) ballInHand = false;
 }
 
-Ball getCueBall(){
-  int cueBallIndex = 0;
-  for(int i = 0; i < balls.size(); i++){
-    if(balls.get(i).number == 0){
-      cueBallIndex = i;
-    }
-  }
-  return balls.get(cueBallIndex);
-}
+//Ball getCueBall(){
+//  int cueBallIndex = 0;
+//  for(int i = 0; i < balls.size(); i++){
+//    if(balls.get(i).number == 0){
+//      cueBallIndex = i;
+//    }
+//  }
+//  return balls.get(cueBallIndex);
+//}
