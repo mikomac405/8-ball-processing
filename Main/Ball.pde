@@ -1,11 +1,17 @@
 class Ball {
   PVector position;
-  PVector velocity = new PVector(0,0);
+  PVector velocity = new PVector(0, 0);
+  float deceleration = 0;
   
   PImage img;
   float radius;
   float dragCoeff = 0.02;
   int number;
+  
+  float mass = 0.16; // masa w kilogramach
+  float pressureForce = this.mass * GRAVITATIONAL_ACC;  // siła nacisku na stół
+  float frictionForce = TABLE_FRICTION_COEFF * this.pressureForce; //siła tarcia
+  
   
   boolean inGame = true;
 
@@ -17,9 +23,15 @@ class Ball {
   }
  
   void update() {
-    this.position.add(
-      PVector.mult((this.velocity.mult(1 - this.dragCoeff / SIM_STEPS_PER_FRAME)), 1.0 / SIM_STEPS_PER_FRAME)
-    );
+    float deltaTime = 1.0 / (frameRate * SIM_STEPS_PER_FRAME);
+    this.deceleration = this.frictionForce / this.mass;
+    float inertia = this.frictionForce;
+    PVector decelerationVector = PVector.mult(this.velocity, -1).normalize();
+    PVector inertiaVector = PVector.mult(decelerationVector, -inertia * deltaTime);
+    decelerationVector.mult(deceleration * deltaTime).add(inertiaVector);
+    this.velocity.add(decelerationVector);
+    if(this.velocity.mag() <= STALE_BIAS) this.velocity.mult(0);
+    this.position.add(PVector.mult(this.velocity,deltaTime * PIXELS_PER_METER));
   }
 
   void checkBoundaryCollision() {
@@ -28,7 +40,7 @@ class Ball {
       this.position.x = 1582 - this.radius;
       this.velocity.x *= -1;
       collision = true;
-    } else if (this.position.x < 238+this.radius) {
+    } else if (this.position.x < 238 + this.radius) {
       this.position.x = 238+this.radius;
       this.velocity.x *= -1;
       collision = true;
@@ -47,10 +59,7 @@ class Ball {
   boolean handlePitCollision(Pit pit){
     PVector distVec = PVector.sub(this.position, pit.position);
     float distSquared = sq(distVec.x) + sq(distVec.y);
-    if(distSquared <= sq(2 * this.radius)) {
-      return true;
-    }
-    return false;
+    return (distSquared <= sq(2 * this.radius));
   }
   
   void handleCollision(Ball other) {

@@ -19,23 +19,21 @@ Player currentPlayer;
 final float MIN_CUE_OFFSET = 10;      //minimalna i maksymalna odległość kija od białej kuli
 final float MAX_CUE_OFFSET = 120;
 
-final float STALE_BIAS = 0.07;    //dokładność przy sprawdzaniu, czy już nic się nie porusza
+final float STALE_BIAS = 0.005;    //dokładność przy sprawdzaniu, czy już nic się nie porusza
+
+
+final float GRAVITATIONAL_ACC = 9.807; // przyśpieszenie grawitacyjne
+final float TABLE_FRICTION_COEFF = 0.105; // zakładamy średnią z rolling_resistance ~ 0.01 i sliding_friction ~0.2
+
+final float PIXELS_PER_METER = 400;
 
 void setup() {
   size(1820, 980, P2D);
   imageMode(CENTER); // jakby bardzo w czymś przeszkadzało, to można zmienić
   loadGraphics();
-  
-  resetCueBall = false;
-  tookShot = false;
-  ballInHand = false;
-  endGame = false;
-  scored = false;
+  frameRate(60);
   
   cue = new Cue();
-  player1 = new Player("G1");
-  player2 = new Player("G2");
-  currentPlayer = player1;
   
   pits.add(new Pit(238,124));
   pits.add(new Pit(910,124));
@@ -44,28 +42,12 @@ void setup() {
   pits.add(new Pit(910,856));
   pits.add(new Pit(1582,856));
   
+  resetGame();
   
-  balls.add(new Ball(500, 490, 20, ballsImgs.get(0), 0)); // cueBall
-  balls.add(new Ball(1400, 410, 20, ballsImgs.get(12), 12)); // 12 stripes
-  balls.add(new Ball(1400, 450, 20, ballsImgs.get(6), 6)); // 6 solid
-  balls.add(new Ball(1400, 490, 20, ballsImgs.get(15), 15)); // 15 stripes
-  balls.add(new Ball(1400, 530, 20, ballsImgs.get(13), 13)); // 13 stripes
-  balls.add(new Ball(1400, 570, 20, ballsImgs.get(5), 5)); // 5 solid
-  balls.add(new Ball(1365, 550, 20, ballsImgs.get(4), 4)); // 4 solid
-  balls.add(new Ball(1365, 430, 20, ballsImgs.get(14), 14)); // 14 stripes
-  balls.add(new Ball(1365, 470, 20, ballsImgs.get(7), 7)); // 7 solid
-  balls.add(new Ball(1365, 510, 20, ballsImgs.get(11), 11)); // 11 stripes
-  balls.add(new Ball(1330, 450, 20, ballsImgs.get(3), 3)); // 3 solid
-  balls.add(new Ball(1330, 490, 20, ballsImgs.get(8), 8)); // 8 BLACK
-  balls.add(new Ball(1330, 530, 20, ballsImgs.get(10), 10)); // 10 stripes
-  balls.add(new Ball(1295, 470, 20, ballsImgs.get(2), 2)); // 2 solid
-  balls.add(new Ball(1295, 510, 20, ballsImgs.get(9), 9)); // 9 stripes
-  balls.add(new Ball(1260, 490, 20, ballsImgs.get(1), 1)); // 1 solid
- // balls = tempBalls;
-  //balls[0].velocity = PVector.random2D().mult(30);
 }
 
 void draw() {
+  
   if(endGame){
     return;
   }
@@ -83,7 +65,6 @@ void draw() {
     for (int j = 0; j < balls.size(); j++) {
       if(balls.get(j).inGame){
         balls.get(j).update();
-        //balls.get(j).display();
         balls.get(j).checkBoundaryCollision();
         for (int k = j + 1; k < balls.size(); k++)
           if(balls.get(k).inGame) balls.get(j).handleCollision(balls.get(k));
@@ -201,8 +182,10 @@ void draw() {
     
     cue.draw(); // tutaj odbywa się też próba odegrania animacji
     
-    if(cue.trigger) // strzał w ostatniej klatce animacji
-      balls.get(0).velocity = new PVector(mouseX, mouseY).sub(balls.get(0).position).mult(0.08);
+    if(cue.trigger){ // strzał w ostatniej klatce animacji
+      float initialSpeed = map(cue.maxOffset,MIN_CUE_OFFSET + balls.get(0).radius,MAX_CUE_OFFSET + balls.get(0).radius,0.5,16); // m/s 
+      balls.get(0).velocity = PVector.sub(balls.get(0).position,new PVector(mouseX, mouseY)).normalize().mult(-initialSpeed);
+    }
   }
 }
 
@@ -228,6 +211,8 @@ void mouseClicked(){
 void keyPressed(){
   if(key == 'k')
     if(ballInHand) balls.get(0).position = new PVector(mouseX, mouseY);
+  if(key == 'r')
+    resetGame();
 }
 
 void keyReleased(){
@@ -235,12 +220,32 @@ void keyReleased(){
     if(ballInHand) ballInHand = false;
 }
 
-//Ball getCueBall(){
-//  int cueBallIndex = 0;
-//  for(int i = 0; i < balls.size(); i++){
-//    if(balls.get(i).number == 0){
-//      cueBallIndex = i;
-//    }
-//  }
-//  return balls.get(cueBallIndex);
-//}
+void resetGame(){
+  resetCueBall = false;
+  tookShot = false;
+  ballInHand = false;
+  endGame = false;
+  scored = false;
+  
+  player1 = new Player("G1");
+  player2 = new Player("G2");
+  currentPlayer = player1;
+  
+  balls = new ArrayList<Ball>();
+  balls.add(new Ball(500, 490, 20, ballsImgs.get(0), 0)); // cueBall
+  balls.add(new Ball(1400, 410, 20, ballsImgs.get(12), 12)); // 12 stripes
+  balls.add(new Ball(1400, 450, 20, ballsImgs.get(6), 6)); // 6 solid
+  balls.add(new Ball(1400, 490, 20, ballsImgs.get(15), 15)); // 15 stripes
+  balls.add(new Ball(1400, 530, 20, ballsImgs.get(13), 13)); // 13 stripes
+  balls.add(new Ball(1400, 570, 20, ballsImgs.get(5), 5)); // 5 solid
+  balls.add(new Ball(1365, 550, 20, ballsImgs.get(4), 4)); // 4 solid
+  balls.add(new Ball(1365, 430, 20, ballsImgs.get(14), 14)); // 14 stripes
+  balls.add(new Ball(1365, 470, 20, ballsImgs.get(7), 7)); // 7 solid
+  balls.add(new Ball(1365, 510, 20, ballsImgs.get(11), 11)); // 11 stripes
+  balls.add(new Ball(1330, 450, 20, ballsImgs.get(3), 3)); // 3 solid
+  balls.add(new Ball(1330, 490, 20, ballsImgs.get(8), 8)); // 8 BLACK
+  balls.add(new Ball(1330, 530, 20, ballsImgs.get(10), 10)); // 10 stripes
+  balls.add(new Ball(1295, 470, 20, ballsImgs.get(2), 2)); // 2 solid
+  balls.add(new Ball(1295, 510, 20, ballsImgs.get(9), 9)); // 9 stripes
+  balls.add(new Ball(1260, 490, 20, ballsImgs.get(1), 1)); // 1 solid
+}
