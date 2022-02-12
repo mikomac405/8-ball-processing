@@ -1,43 +1,65 @@
 class Ball {
   PVector position;
-  PVector velocity;
+  PVector velocity = new PVector(0, 0);
+  float deceleration = 0;
   
-  color clr;
+  PImage img;
   float radius;
-  float dragCoeff = 0.01;
+  float dragCoeff = 0.02;
+  int number;
+  
+  float mass = 0.16; // masa w kilogramach
+  float pressureForce = this.mass * GRAVITATIONAL_ACC;  // siła nacisku na stół
+  float frictionForce = TABLE_FRICTION_COEFF * this.pressureForce; //siła tarcia
+  
+  
+  boolean inGame = true;
 
-  Ball(float x, float y, float r_, color c) {
+  Ball(float x, float y, float r_, PImage img, int number) {
     this.position = new PVector(x, y);
     this.radius = r_;
-    this.clr = c;
-    if(this.clr == color(255,255,255)) this.velocity = PVector.random2D().mult(20);
-    else this.velocity = new PVector(0,0);
+    this.img = img;
+    this.number = number;
   }
-
+ 
   void update() {
-    this.position.add(this.velocity.mult(1-this.dragCoeff));
+    float deltaTime = 1.0 / (frameRate * SIM_STEPS_PER_FRAME);
+    this.deceleration = this.frictionForce / this.mass;
+    float inertia = this.frictionForce;
+    PVector decelerationVector = PVector.mult(this.velocity, -1).normalize();
+    PVector inertiaVector = PVector.mult(decelerationVector, -inertia * deltaTime);
+    decelerationVector.mult(deceleration * deltaTime).add(inertiaVector);
+    this.velocity.add(decelerationVector);
+    if(this.velocity.mag() <= STALE_BIAS) this.velocity.mult(0);
+    this.position.add(PVector.mult(this.velocity,deltaTime * PIXELS_PER_METER));
   }
 
   void checkBoundaryCollision() {
     boolean collision = false;
-    if (position.x > width - this.radius) {
-      this.position.x = width - this.radius;
+    if (position.x > 1582 - this.radius) {
+      this.position.x = 1582 - this.radius;
       this.velocity.x *= -1;
       collision = true;
-    } else if (this.position.x < this.radius) {
-      this.position.x = this.radius;
+    } else if (this.position.x < 238 + this.radius) {
+      this.position.x = 238+this.radius;
       this.velocity.x *= -1;
       collision = true;
-    } else if (this.position.y > height - this.radius) {
-      this.position.y = height - this.radius;
+    } else if (this.position.y > 856 - this.radius) {
+      this.position.y = 856 - this.radius;
       this.velocity.y *= -1;
       collision = true;
-    } else if (this.position.y < this.radius) {
-      this.position.y = this.radius;
+    } else if (this.position.y < 124 + this.radius) { // this.radius
+      this.position.y = 124 + this.radius;
       this.velocity.y *= -1;
       collision = true;
     }
     if(collision) this.velocity.mult(1 - 4 * this.dragCoeff);
+  }
+  
+  boolean handlePitCollision(Pit pit){
+    PVector distVec = PVector.sub(this.position, pit.position);
+    float distSquared = sq(distVec.x) + sq(distVec.y);
+    return (distSquared <= sq(2 * this.radius));
   }
   
   void handleCollision(Ball other) {
@@ -56,8 +78,6 @@ class Ball {
   }
   
   void display() {
-    noStroke();
-    fill(clr);
-    ellipse(position.x, position.y, radius*2, radius*2);
-  }
+    image(this.img, this.position.x, this.position.y, this.radius*2, this.radius*2);
+  } 
 }
